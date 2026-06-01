@@ -1,0 +1,262 @@
+{
+  "info": {
+    "_postman_id": "foodndeliv-task3",
+    "name": "FoodNDeliv - Task 3 (Orders + Security + KrakenD)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Create Order (Valid Request)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": 1,\n  \"restaurantId\": 1,\n  \"orderLines\": [\n    {\n      \"productName\": \"Pizza Margherita\",\n      \"quantity\": 2,\n      \"price\": 12.99\n    },\n    {\n      \"productName\": \"Pasta Carbonara\",\n      \"quantity\": 1,\n      \"price\": 10.50\n    }\n  ],\n  \"state\": \"PENDING\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/api/ctrl/orders",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "ctrl", "orders"]
+        }
+      },
+      "response": [],
+      "description": "POST /api/ctrl/orders - Crée une commande avec validation Bean + total côté serveur"
+    },
+    {
+      "name": "02 - Create Order (Invalid - Missing Product Name)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": 1,\n  \"restaurantId\": 1,\n  \"orderLines\": [\n    {\n      \"productName\": \"\",\n      \"quantity\": 2,\n      \"price\": 12.99\n    }\n  ],\n  \"state\": \"PENDING\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/api/ctrl/orders",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "ctrl", "orders"]
+        }
+      },
+      "response": [],
+      "description": "POST /api/ctrl/orders - Doit retourner 400 (Bean Validation - productName vide)"
+    },
+    {
+      "name": "03 - Create Order (Invalid - Negative Price)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": 1,\n  \"restaurantId\": 1,\n  \"orderLines\": [\n    {\n      \"productName\": \"Pizza\",\n      \"quantity\": 2,\n      \"price\": -5.00\n    }\n  ],\n  \"state\": \"PENDING\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/api/ctrl/orders",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "ctrl", "orders"]
+        }
+      },
+      "response": [],
+      "description": "POST /api/ctrl/orders - Doit retourner 400 (Bean Validation - prix négatif)"
+    },
+    {
+      "name": "04 - Get Order By ID (Verify Server-Side Total)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8082/api/ctrl/orders/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "ctrl", "orders", "1"]
+        }
+      },
+      "response": [],
+      "description": "GET /api/ctrl/orders/1 - Récupère une commande et vérifie totalPrice calculé côté serveur"
+    },
+    {
+      "name": "05 - Get All Orders (RBAC Test)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8082/api/ctrl/orders",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "ctrl", "orders"]
+        }
+      },
+      "response": [],
+      "description": "GET /api/ctrl/orders - Teste RBAC (@PreAuthorize sur OrderService)"
+    },
+    {
+      "name": "06 - Via KrakenD Gateway - Get Customers",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/customers",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["customers"]
+        }
+      },
+      "response": [],
+      "description": "GET /customers via KrakenD Gateway (routage vers API RO)"
+    },
+    {
+      "name": "07 - Via KrakenD Gateway - Create Customer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Marie Dupont\",\n  \"email\": \"marie@email.com\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/customers",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8000",
+          "path": ["customers"]
+        }
+      },
+      "response": [],
+      "description": "POST /customers via KrakenD Gateway (routage vers API RW)"
+    },
+    {
+      "name": "08 - Invariant Test - Max Pending Orders",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": 1,\n  \"restaurantId\": 1,\n  \"orderLines\": [\n    {\n      \"productName\": \"Pizza\",\n      \"quantity\": 1,\n      \"price\": 10.00\n    }\n  ],\n  \"state\": \"PENDING\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8082/api/ctrl/orders",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "ctrl", "orders"]
+        }
+      },
+      "response": [],
+      "description": "POST /api/ctrl/orders - Test invariant (max 5 commandes en attente par client)"
+    }
+  ],
+  "variable": [
+    {
+      "key": "access_token",
+      "value": "YOUR_TOKEN_HERE",
+      "type": "string"
+    },
+    {
+      "key": "base_url",
+      "value": "http://localhost:8082",
+      "type": "string"
+    },
+    {
+      "key": "gateway_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ]
+}

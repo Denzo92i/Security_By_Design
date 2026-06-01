@@ -1,0 +1,32 @@
+{
+  "version": 3,
+  "timeout": "30s",
+  "name": "FoodNDeliv API Gateway",
+  "port": 8000,
+  "endpoints": [
+    {
+      "endpoint": "/customers",
+      "method": "GET",
+      "input_headers": ["Authorization"],
+      "backend": [{"url_pattern": "/api/ctrl/customers","method": "GET","host": ["http://foodndeliv-api-ro:8080"]}]
+    },
+    {
+      "endpoint": "/customers",
+      "method": "POST",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [{"url_pattern": "/api/ctrl/customers","method": "POST","host": ["http://foodndeliv-api:8080"]}]
+    },
+    {
+      "endpoint": "/orders",
+      "method": "GET",
+      "input_headers": ["Authorization"],
+      "backend": [{"url_pattern": "/api/ctrl/orders","method": "GET","host": ["http://foodndeliv-api-ro:8080"]}]
+    },
+    {
+      "endpoint": "/orders",
+      "method": "POST",
+      "input_headers": ["Authorization", "Content-Type"],
+      "backend": [{"url_pattern": "/api/ctrl/orders","method": "POST","host": ["http://foodndeliv-api:8080"]}]
+    }
+  ]
+}

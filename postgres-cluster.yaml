@@ -1,0 +1,12 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: foodndeliv-db
+spec:
+  instances: 2
+  bootstrap:
+    initdb:
+      database: foodndeliv
+      owner: foodndeliv_user
+  storage:
+    size: 1Gi

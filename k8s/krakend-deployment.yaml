@@ -1,0 +1,154 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: krakend-gateway
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: krakend
+  template:
+    metadata:
+      labels:
+        app: krakend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: krakend
+        image: devopsfaith/krakend:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false  # KrakenD needs write for cache/logs
+          capabilities:
+            drop: ["ALL"]
+        ports:
+        - containerPort: 8000
+          name: http
+        volumeMounts:
+        - name: krakend-config
+          mountPath: /etc/krakend
+        - name: tmp-volume
+          mountPath: /tmp
+        livenessProbe:
+          httpGet:
+            path: /__health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /__health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: krakend-config
+        configMap:
+          name: krakend-config
+      - name: tmp-volume
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: krakend-gateway
+spec:
+  selector:
+    app: krakend
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: krakend-config
+data:
+  krakend.json: |
+    {
+      "version": 3,
+      "timeout": "30s",
+      "name": "FoodNDeliv API Gateway",
+      "port": 8000,
+      "cache_ttl": "3600s",
+      "backend": [
+        {
+          "url_pattern": "/api/ctrl/customers",
+          "method": "GET",
+          "host": ["http://foodndeliv-api:8080"],
+          "disable_host_sanitize": false
+        },
+        {
+          "url_pattern": "/api/ctrl/customers",
+          "method": "POST",
+          "host": ["http://foodndeliv-api:8080"],
+          "disable_host_sanitize": false
+        },
+        {
+          "url_pattern": "/api/ctrl/orders",
+          "method": "GET",
+          "host": ["http://foodndeliv-api-ro:8080"],
+          "disable_host_sanitize": false
+        },
+        {
+          "url_pattern": "/api/ctrl/orders",
+          "method": "POST",
+          "host": ["http://foodndeliv-api:8080"],
+          "disable_host_sanitize": false
+        }
+      ],
+      "endpoints": [
+        {
+          "endpoint": "/customers",
+          "method": "GET",
+          "backend": [
+            {
+              "url_pattern": "/api/ctrl/customers",
+              "method": "GET",
+              "host": ["http://foodndeliv-api-ro:8080"]
+            }
+          ]
+        },
+        {
+          "endpoint": "/customers",
+          "method": "POST",
+          "backend": [
+            {
+              "url_pattern": "/api/ctrl/customers",
+              "method": "POST",
+              "host": ["http://foodndeliv-api:8080"]
+            }
+          ]
+        },
+        {
+          "endpoint": "/orders",
+          "method": "GET",
+          "backend": [
+            {
+              "url_pattern": "/api/ctrl/orders",
+              "method": "GET",
+              "host": ["http://foodndeliv-api-ro:8080"]
+            }
+          ]
+        },
+        {
+          "endpoint": "/orders",
+          "method": "POST",
+          "backend": [
+            {
+              "url_pattern": "/api/ctrl/orders",
+              "method": "POST",
+              "host": ["http://foodndeliv-api:8080"]
+            }
+          ]
+        }
+      ]
+    }

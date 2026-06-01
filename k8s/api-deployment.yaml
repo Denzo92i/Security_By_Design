@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: foodndeliv-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: foodndeliv
+  template:
+    metadata:
+      labels:
+        app: foodndeliv
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: foodndeliv
+        image: foodndeliv:latest
+        imagePullPolicy: Never
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          seccompProfile:
+            type: RuntimeDefault
+          capabilities:
+            drop: ["ALL"]
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: "-Djava.io.tmpdir=/tmp"
+        - name: DB_HOST
+          value: "foodndeliv-db-rw"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "foodndeliv"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: foodndeliv-db-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: foodndeliv-db-secret
+              key: password
+        - name: IAM_CLIENT_SECRET
+          value: "x6E4PRH1anGeVeqOKJhBhEFoYbP6HV8g"
+        - name: IAM_PASSWORD
+          value: "x6E4PRH1anGeVeqOKJhBhEFoYbP6HV8g"
+        - name: IAM_HOST
+          value: "keycloak"
+        - name: IAM_PORT
+          value: "8080"
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: foodndeliv-api
+spec:
+  selector:
+    app: foodndeliv
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
