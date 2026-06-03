@@ -1,41 +1,33 @@
 package com.example.foodndeliv.entity;
 
+import com.example.foodndeliv.types.OrderState;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.List;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
-import com.example.foodndeliv.types.OrderState;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "orders")
 @Data
-@NoArgsConstructor
+@Table(name = "orders")
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "order_details", length = 500)
-    private String orderDetails;
+    @Column(name = "customer_id", nullable = false)
+    private Long customerId;
 
-    @ManyToOne
-    @JoinColumn(name = "restaurant_id", nullable = false)
-    private Restaurant restaurant;
+    @Column(name = "restaurant_id", nullable = false)
+    private Long restaurantId;
 
-    @ManyToOne
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderLine> orderLines;
+    @Column(nullable = false)
+    private BigDecimal total;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "state", nullable = false)
+    @Column(nullable = false)
     private OrderState state;
 
     @Column(name = "created_at")
@@ -44,4 +36,17 @@ public class Order {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OrderLine> orderLines = new ArrayList<>();
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

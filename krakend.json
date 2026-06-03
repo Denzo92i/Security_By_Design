@@ -7,26 +7,84 @@
     {
       "endpoint": "/customers",
       "method": "GET",
-      "input_headers": ["Authorization"],
-      "backend": [{"url_pattern": "/api/ctrl/customers","method": "GET","host": ["http://foodndeliv-api-ro:8080"]}]
+      "input_headers": ["*"],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://keycloak:8080/realms/foodndeliv/protocol/openid-connect/certs",
+          "insecure_skip_verify": true
+        }
+      },
+      "backend": [
+        {
+          "url_pattern": "/api/ctrl/customers",
+          "method": "GET",
+          "host": ["http://foodndeliv-api-ro:8080"],
+          "disable_host_sanitize": true
+        }
+      ]
     },
     {
       "endpoint": "/customers",
       "method": "POST",
-      "input_headers": ["Authorization", "Content-Type"],
-      "backend": [{"url_pattern": "/api/ctrl/customers","method": "POST","host": ["http://foodndeliv-api:8080"]}]
+      "input_headers": ["*"],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://keycloak:8080/realms/foodndeliv/protocol/openid-connect/certs",
+          "insecure_skip_verify": true
+        }
+      },
+      "backend": [
+        {
+          "url_pattern": "/api/ctrl/customers",
+          "method": "POST",
+          "host": ["http://foodndeliv-api:8080"],
+          "disable_host_sanitize": true,
+          "input_body": "original"
+        }
+      ]
     },
     {
       "endpoint": "/orders",
       "method": "GET",
-      "input_headers": ["Authorization"],
-      "backend": [{"url_pattern": "/api/ctrl/orders","method": "GET","host": ["http://foodndeliv-api-ro:8080"]}]
+      "input_headers": ["*"],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://keycloak:8080/realms/foodndeliv/protocol/openid-connect/certs",
+          "insecure_skip_verify": true
+        }
+      },
+      "backend": [
+        {
+          "url_pattern": "/api/ctrl/orders",
+          "method": "GET",
+          "host": ["http://foodndeliv-api-ro:8080"],
+          "disable_host_sanitize": true
+        }
+      ]
     },
     {
       "endpoint": "/orders",
       "method": "POST",
-      "input_headers": ["Authorization", "Content-Type"],
-      "backend": [{"url_pattern": "/api/ctrl/orders","method": "POST","host": ["http://foodndeliv-api:8080"]}]
+      "input_headers": ["*"],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://keycloak:8080/realms/foodndeliv/protocol/openid-connect/certs",
+          "insecure_skip_verify": true
+        }
+      },
+      "backend": [
+        {
+          "url_pattern": "/api/ctrl/orders",
+          "method": "POST",
+          "host": ["http://foodndeliv-api:8080"],
+          "disable_host_sanitize": true,
+          "input_body": "original"
+        }
+      ]
     }
   ]
 }

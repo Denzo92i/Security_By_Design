@@ -5,8 +5,6 @@ import java.util.List;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
-import com.example.foodndeliv.types.OrderState;
-
 @Data
 public class OrderRequestDTO {
 
@@ -21,7 +19,4 @@ public class OrderRequestDTO {
     @NotEmpty(message = "Order lines must not be empty")
     @Valid
     private List<OrderLineDTO> orderLines;
-    
-    @NotNull(message = "Order state must not be null")
-    private OrderState state;
 }

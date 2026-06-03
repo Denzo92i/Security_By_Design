@@ -9,6 +9,7 @@ com\example\foodndeliv\config\ModelMapperConfig.class
 com\example\foodndeliv\config\ReadOnlyConfig$1.class
 com\example\foodndeliv\entity\OrderLine.class
 com\example\foodndeliv\controller\CustomerController.class
+com\example\foodndeliv\config\GlobalExceptionHandler.class
 com\example\foodndeliv\service\OrderService.class
 com\example\foodndeliv\entity\Order.class
 com\example\foodndeliv\entity\Restaurant.class

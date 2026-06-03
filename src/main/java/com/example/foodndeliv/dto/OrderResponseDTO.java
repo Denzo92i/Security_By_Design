@@ -1,20 +1,15 @@
 package com.example.foodndeliv.dto;
 
 import lombok.Data;
-import java.util.List;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
-import com.example.foodndeliv.types.OrderState;
 
 @Data
 public class OrderResponseDTO {
     private Long id;
-    private CustomerDTO customer;
-    private RestaurantDTO restaurant;
-    private List<OrderLineDTO> orderLines;
-    private OrderState state;
-    private Double totalPrice;  // Calculé côté serveur
+    private Long customerId;
+    private Long restaurantId;
+    private BigDecimal total;
+    private String state;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }
-

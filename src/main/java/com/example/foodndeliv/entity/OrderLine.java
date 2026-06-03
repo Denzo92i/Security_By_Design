@@ -2,29 +2,27 @@ package com.example.foodndeliv.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 
 @Entity
-@Table(name = "order_lines")
 @Data
-@NoArgsConstructor
+@Table(name = "order_lines")
 public class OrderLine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
     private Long id;
 
     @Column(name = "product_name", nullable = false)
     private String productName;
 
-    @Column(name = "quantity", nullable = false)
-    private int quantity;
+    @Column(nullable = false)
+    private Integer quantity;
 
-    @Column(name = "price", nullable = false)
-    private double price;
+    @Column(nullable = false)
+    private BigDecimal price;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 }

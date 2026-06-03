@@ -1,18 +1,22 @@
 package com.example.foodndeliv.service;
 
-import com.example.foodndeliv.repository.*;
-import com.example.foodndeliv.dto.*;
-import com.example.foodndeliv.entity.*;
+import com.example.foodndeliv.dto.OrderRequestDTO;
+import com.example.foodndeliv.dto.OrderResponseDTO;
+import com.example.foodndeliv.entity.Customer;
+import com.example.foodndeliv.entity.Order;
+import com.example.foodndeliv.entity.OrderLine;
+import com.example.foodndeliv.entity.Restaurant;
+import com.example.foodndeliv.repository.CustomerRepository;
+import com.example.foodndeliv.repository.OrderRepository;
+import com.example.foodndeliv.repository.RestaurantRepository;
 import com.example.foodndeliv.types.OrderState;
-
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.access.prepost.PreAuthorize;
 
-import java.util.*;
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -26,102 +30,48 @@ public class OrderService {
     @Autowired
     private RestaurantRepository restaurantRepository;
 
-    @Autowired
-    private ModelMapper modelMapper;
-
-    // Invariant: Maximum 5 pending orders per customer
-    private static final int MAX_PENDING_ORDERS_PER_CUSTOMER = 5;
-
     @Transactional
-    @PreAuthorize("hasRole('ROLE_CUSTOMER') or hasRole('ROLE_ADMIN')")
-    public OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO) {
-        // Invariant validation: Check pending orders count
-        long pendingOrdersCount = orderRepository.findAll().stream()
-                .filter(o -> o.getCustomer().getId().equals(orderRequestDTO.getCustomerId()))
-                .filter(o -> o.getState() == OrderState.PENDING)
-                .count();
-        
-        if (pendingOrdersCount >= MAX_PENDING_ORDERS_PER_CUSTOMER) {
-            throw new RuntimeException("Customer has too many pending orders (max: " + 
-                    MAX_PENDING_ORDERS_PER_CUSTOMER + ")");
+    public OrderResponseDTO createOrder(OrderRequestDTO request) {
+        long pendingOrders = orderRepository.countByCustomer_IdAndState(request.getCustomerId(), OrderState.PENDING);
+        if (pendingOrders >= 5) {
+            throw new RuntimeException("Customer already has 5 pending orders");
         }
+
+        BigDecimal total = request.getOrderLines().stream()
+                .map(line -> line.getPrice().multiply(BigDecimal.valueOf(line.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Customer customer = customerRepository.findById(request.getCustomerId())
+                .orElseThrow(() -> new RuntimeException("Customer not found: " + request.getCustomerId()));
+        Restaurant restaurant = restaurantRepository.findById(request.getRestaurantId())
+                .orElseThrow(() -> new RuntimeException("Restaurant not found: " + request.getRestaurantId()));
 
         Order order = new Order();
-
-        Customer customer = customerRepository.findById(orderRequestDTO.getCustomerId())
-                .orElseThrow(() -> new RuntimeException("Customer not found"));
-        Restaurant restaurant = restaurantRepository.findById(orderRequestDTO.getRestaurantId())
-                .orElseThrow(() -> new RuntimeException("Restaurant not found"));
-        
-        order.setCustomer(customer);
-        order.setRestaurant(restaurant);
-        
-        // CORRECTION : Initialisation forcée à PENDING pour éviter l'erreur PropertyValueException
+        order.setCustomerId(customer.getId());
+        order.setRestaurantId(restaurant.getId());
         order.setState(OrderState.PENDING);
+        order.setTotal(total);
+        order.setOrderLines(request.getOrderLines().stream()
+                .map(dto -> {
+                    OrderLine line = new OrderLine();
+                    line.setProductName(dto.getProductName());
+                    line.setQuantity(dto.getQuantity());
+                    line.setPrice(dto.getPrice());
+                    line.setOrder(order);
+                    return line;
+                })
+                .collect(Collectors.toList()));
 
-        List<OrderLine> orderLines = new ArrayList<>();
-        double totalPrice = 0;
+        Order savedOrder = orderRepository.save(order);
 
-        for(OrderLineDTO orderlinedto : orderRequestDTO.getOrderLines())
-        {
-                OrderLine orderLine = modelMapper.map(orderlinedto, OrderLine.class);
-                orderLine.setOrder(order);
-                orderLines.add(orderLine);
-                
-                // Server-side total calculation
-                totalPrice += orderLine.getPrice() * orderLine.getQuantity();
-        }
+        OrderResponseDTO response = new OrderResponseDTO();
+        response.setId(savedOrder.getId());
+        response.setCustomerId(savedOrder.getCustomerId());
+        response.setRestaurantId(savedOrder.getRestaurantId());
+        response.setTotal(savedOrder.getTotal());
+        response.setState(savedOrder.getState().name());
+        response.setCreatedAt(savedOrder.getCreatedAt());
 
-        order.setOrderLines(orderLines);
-        
-        // Set server-calculated timestamp
-        order.setCreatedAt(LocalDateTime.now());
-        order.setUpdatedAt(LocalDateTime.now());
-
-        Order newOrder = orderRepository.save(order);
-
-        // Map to response DTO with calculated total
-        OrderResponseDTO responseDTO = modelMapper.map(newOrder, OrderResponseDTO.class);
-        responseDTO.setTotalPrice(totalPrice);
-        
-        return responseDTO;
-    }
-
-    @Transactional(readOnly = true)
-    @PreAuthorize("hasRole('ROLE_CUSTOMER') or hasRole('ROLE_ADMIN')")
-    public List<OrderResponseDTO> getAllOrders() {
-
-        List<OrderResponseDTO> retOrders = new ArrayList<>();
-
-        for(Order order : orderRepository.findAll())
-        {
-                OrderResponseDTO dto = modelMapper.map(order, OrderResponseDTO.class);
-                
-                // Calculate total price server-side
-                double totalPrice = order.getOrderLines().stream()
-                    .mapToDouble(ol -> ol.getPrice() * ol.getQuantity())
-                    .sum();
-                dto.setTotalPrice(totalPrice);
-                
-                retOrders.add(dto);
-        }
-        return retOrders;
-    }
-
-    @Transactional(readOnly = true)
-    @PreAuthorize("hasRole('ROLE_CUSTOMER') or hasRole('ROLE_ADMIN')")
-    public OrderResponseDTO getOrderById(Long orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-        
-        OrderResponseDTO dto = modelMapper.map(order, OrderResponseDTO.class);
-        
-        // Calculate total price server-side
-        double totalPrice = order.getOrderLines().stream()
-            .mapToDouble(ol -> ol.getPrice() * ol.getQuantity())
-            .sum();
-        dto.setTotalPrice(totalPrice);
-        
-        return dto;
+        return response;
     }
 }

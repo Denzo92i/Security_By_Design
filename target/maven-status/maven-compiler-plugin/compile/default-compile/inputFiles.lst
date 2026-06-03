@@ -13,6 +13,7 @@ C:\projets\foodndeliv\src\main\java\com\example\foodndeliv\dto\CustomerResponseD
 C:\projets\foodndeliv\src\main\java\com\example\foodndeliv\controller\OrderController.java
 C:\projets\foodndeliv\src\main\java\com\example\foodndeliv\types\OrderState.java
 C:\projets\foodndeliv\src\main\java\com\example\foodndeliv\dto\OrderRequestDTO.java
+C:\projets\foodndeliv\src\main\java\com\example\foodndeliv\config\GlobalExceptionHandler.java
 C:\projets\foodndeliv\src\main\java\com\example\foodndeliv\dto\CustomerUpdateDTO.java
 C:\projets\foodndeliv\src\main\java\com\example\foodndeliv\entity\Order.java
 C:\projets\foodndeliv\src\main\java\com\example\foodndeliv\controller\CustomerController.java

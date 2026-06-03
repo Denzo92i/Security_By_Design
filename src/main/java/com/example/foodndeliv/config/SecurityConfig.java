@@ -25,10 +25,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/public/**").permitAll() 
                 
-                // On utilise hasAnyAuthority pour couvrir les deux formats de rôle possibles
-                .requestMatchers(HttpMethod.POST, "/api/ctrl/customers").hasAnyAuthority("ADMIN", "ROLE_ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/ctrl/customers").hasAnyAuthority("ADMIN", "ROLE_ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/ctrl/customers").hasAnyAuthority("ADMIN", "ROLE_ADMIN", "USER", "ROLE_USER")
+                // Sécurisation stricte selon les rôles
+                .requestMatchers(HttpMethod.POST, "/api/ctrl/customers").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/ctrl/customers").hasAuthority("ROLE_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/ctrl/customers").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                 
                 .anyRequest().authenticated()
             )
@@ -51,12 +51,9 @@ public class SecurityConfig {
             
             Collection<String> roles = (Collection<String>) realmAccess.get("roles");
             
-            // Log de débogage pour voir exactement ce que Spring reçoit
-            System.out.println("DEBUG - Rôles extraits du jeton : " + roles);
-            
             return roles.stream()
                 .map(role -> {
-                    // On ajoute "ROLE_" manuellement pour être compatible avec hasAnyAuthority
+                    // Force le préfixe ROLE_ pour correspondre à hasAuthority()
                     String roleName = role.toUpperCase();
                     return roleName.startsWith("ROLE_") ? roleName : "ROLE_" + roleName;
                 })
