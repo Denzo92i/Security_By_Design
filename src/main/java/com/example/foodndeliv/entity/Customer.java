@@ -1,38 +1,53 @@
 package com.example.foodndeliv.entity;
 
+import com.example.foodndeliv.types.CustomerState;
 import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.List;
-
-import com.example.foodndeliv.types.*;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "customers")
 @Data
-@NoArgsConstructor
+@Table(name = "customer")
 public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "name", nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "email", nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Order> orders;
+    @Column(nullable = false)
+    private Boolean active = true;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "state", nullable = false)
-    private CustomerState state;
-    
-}
+    @Column(nullable = false)
+    private CustomerState state = CustomerState.ACTIVE;
 
+    // ── Champ ABAC : lié au "sub" claim du JWT Keycloak ──
+    // Rempli lors de la création du customer via l'API.
+    // Utilisé par SecurityService.isOwner() pour vérifier
+    // que le token appartient bien au propriétaire du compte.
+    @Column(name = "keycloak_id")
+    private String keycloakId;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+}

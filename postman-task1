@@ -1,49 +1,12 @@
 {
   "info": {
-    "_postman_id": "73d1929a-1f63-4a52-9e3d-bb28fc39ee9f",
-    "name": "CPS2010 - Task1",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "55382126",
-    "_collection_link": "https://go.postman.co/collection/55382126-73d1929a-1f63-4a52-9e3d-bb28fc39ee9f?source=collection_link"
+    "_postman_id": "foodndeliv-task1",
+    "name": "CPS2010 - Task 1 (CNPG + API RW/RO)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "New Request",
-      "request": {
-        "method": "GET",
-        "header": []
-      },
-      "response": []
-    },
-    {
-      "name": "01 - GET Customers (RW)",
-      "request": {
-        "method": "GET",
-        "header": []
-      },
-      "response": []
-    },
-    {
-      "name": "02 - POST Customer (RW)",
-      "request": {
-        "method": "GET",
-        "header": []
-      },
-      "response": []
-    },
-    {
-      "name": "03 - GET Customers (RO)",
-      "request": {
-        "method": "GET",
-        "header": []
-      },
-      "response": []
-    },
-    {
-      "name": "04 - POST Customer RO (should fail 405)",
-      "protocolProfileBehavior": {
-        "disableBodyPruning": true
-      },
+      "name": "01 - GET Customers (API RW - port 8080)",
       "request": {
         "method": "GET",
         "header": [
@@ -53,23 +16,170 @@
             "type": "text"
           }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\"name\":\"Test User\",\"email\":\"test@test.com\",\"state\":\"ACTIVE\"}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+        "url": {
+          "raw": "http://localhost:8080/api/ctrl/customers",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "ctrl", "customers"]
         }
       },
-      "response": []
+      "response": [],
+      "description": "GET /api/ctrl/customers on the RW instance — should return 200 OK with customer list"
+    },
+    {
+      "name": "02 - POST Customer (API RW - port 8080)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Alice Martin\",\n  \"email\": \"alice@foodndeliv.com\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/ctrl/customers",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "ctrl", "customers"]
+        }
+      },
+      "response": [],
+      "description": "POST /api/ctrl/customers on the RW instance — should return 201 Created"
+    },
+    {
+      "name": "03 - GET Customers (API RO - port 8081)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8081/api/ctrl/customers",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "ctrl", "customers"]
+        }
+      },
+      "response": [],
+      "description": "GET /api/ctrl/customers on the RO instance — should return 200 OK (read permitted)"
+    },
+    {
+      "name": "04 - POST Customer (API RO - port 8081) [should return 405]",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bob Test\",\n  \"email\": \"bob@foodndeliv.com\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/ctrl/customers",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "ctrl", "customers"]
+        }
+      },
+      "response": [],
+      "description": "POST /api/ctrl/customers on the RO instance — ReadOnlyConfig must return 405 Method Not Allowed"
+    },
+    {
+      "name": "05 - GET Restaurants (API RW)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/ctrl/restaurants",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "ctrl", "restaurants"]
+        }
+      },
+      "response": [],
+      "description": "GET /api/ctrl/restaurants on the RW instance — 200 OK"
+    },
+    {
+      "name": "06 - PUT Customer (API RO) [should return 405]",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bob Updated\",\n  \"email\": \"bob-updated@foodndeliv.com\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8081/api/ctrl/customers/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8081",
+          "path": ["api", "ctrl", "customers", "1"]
+        }
+      },
+      "response": [],
+      "description": "PUT on the RO instance — ReadOnlyConfig must return 405 (non-GET methods are blocked)"
     }
   ],
   "variable": [
     {
       "key": "access_token",
-      "value": ""
+      "value": "YOUR_KEYCLOAK_TOKEN_HERE",
+      "type": "string"
+    },
+    {
+      "key": "rw_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "ro_url",
+      "value": "http://localhost:8081",
+      "type": "string"
     }
   ]
 }

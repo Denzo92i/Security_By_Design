@@ -85,6 +85,47 @@
           "input_body": "original"
         }
       ]
+    },
+    {
+      "endpoint": "/restaurants",
+      "method": "GET",
+      "input_headers": ["*"],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://keycloak:8080/realms/foodndeliv/protocol/openid-connect/certs",
+          "insecure_skip_verify": true
+        }
+      },
+      "backend": [
+        {
+          "url_pattern": "/api/ctrl/restaurants",
+          "method": "GET",
+          "host": ["http://foodndeliv-api-ro:8080"],
+          "disable_host_sanitize": true
+        }
+      ]
+    },
+    {
+      "endpoint": "/restaurants",
+      "method": "POST",
+      "input_headers": ["*"],
+      "extra_config": {
+        "auth/validator": {
+          "alg": "RS256",
+          "jwk_url": "http://keycloak:8080/realms/foodndeliv/protocol/openid-connect/certs",
+          "insecure_skip_verify": true
+        }
+      },
+      "backend": [
+        {
+          "url_pattern": "/api/ctrl/restaurants",
+          "method": "POST",
+          "host": ["http://foodndeliv-api:8080"],
+          "disable_host_sanitize": true,
+          "input_body": "original"
+        }
+      ]
     }
   ]
 }

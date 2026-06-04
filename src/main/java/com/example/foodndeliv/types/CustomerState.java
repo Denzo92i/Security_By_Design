@@ -1,8 +1,7 @@
 package com.example.foodndeliv.types;
 
-public enum CustomerState { 
+public enum CustomerState {
     ACTIVE,
-    BLOCKED,
-    INACTIVE
-
+    INACTIVE,
+    DELETED
 }

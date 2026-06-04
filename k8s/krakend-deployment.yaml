@@ -24,7 +24,7 @@ spec:
         imagePullPolicy: IfNotPresent
         securityContext:
           allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: false  # KrakenD needs write for cache/logs
+          readOnlyRootFilesystem: false
           capabilities:
             drop: ["ALL"]
         ports:
@@ -78,75 +78,94 @@ data:
       "timeout": "30s",
       "name": "FoodNDeliv API Gateway",
       "port": 8000,
-      "cache_ttl": "3600s",
-      "backend": [
-        {
-          "url_pattern": "/api/ctrl/customers",
-          "method": "GET",
-          "host": ["http://foodndeliv-api:8080"],
-          "disable_host_sanitize": false
-        },
-        {
-          "url_pattern": "/api/ctrl/customers",
-          "method": "POST",
-          "host": ["http://foodndeliv-api:8080"],
-          "disable_host_sanitize": false
-        },
-        {
-          "url_pattern": "/api/ctrl/orders",
-          "method": "GET",
-          "host": ["http://foodndeliv-api-ro:8080"],
-          "disable_host_sanitize": false
-        },
-        {
-          "url_pattern": "/api/ctrl/orders",
-          "method": "POST",
-          "host": ["http://foodndeliv-api:8080"],
-          "disable_host_sanitize": false
-        }
-      ],
       "endpoints": [
         {
           "endpoint": "/customers",
           "method": "GET",
+          "input_headers": ["Authorization", "Content-Type"],
+          "output_encoding": "no-op",
           "backend": [
             {
               "url_pattern": "/api/ctrl/customers",
               "method": "GET",
-              "host": ["http://foodndeliv-api-ro:8080"]
+              "host": ["http://foodndeliv-api-ro:8080"],
+              "disable_host_sanitize": true,
+              "encoding": "no-op"
             }
           ]
         },
         {
           "endpoint": "/customers",
           "method": "POST",
+          "input_headers": ["Authorization", "Content-Type"],
+          "output_encoding": "no-op",
           "backend": [
             {
               "url_pattern": "/api/ctrl/customers",
               "method": "POST",
-              "host": ["http://foodndeliv-api:8080"]
+              "host": ["http://foodndeliv-api:8080"],
+              "disable_host_sanitize": true,
+              "encoding": "no-op"
             }
           ]
         },
         {
           "endpoint": "/orders",
           "method": "GET",
+          "input_headers": ["Authorization", "Content-Type"],
+          "output_encoding": "no-op",
           "backend": [
             {
               "url_pattern": "/api/ctrl/orders",
               "method": "GET",
-              "host": ["http://foodndeliv-api-ro:8080"]
+              "host": ["http://foodndeliv-api-ro:8080"],
+              "disable_host_sanitize": true,
+              "encoding": "no-op"
             }
           ]
         },
         {
           "endpoint": "/orders",
           "method": "POST",
+          "input_headers": ["Authorization", "Content-Type"],
+          "output_encoding": "no-op",
           "backend": [
             {
               "url_pattern": "/api/ctrl/orders",
               "method": "POST",
-              "host": ["http://foodndeliv-api:8080"]
+              "host": ["http://foodndeliv-api:8080"],
+              "disable_host_sanitize": true,
+              "encoding": "no-op"
+            }
+          ]
+        },
+        {
+          "endpoint": "/restaurants",
+          "method": "GET",
+          "input_headers": ["Authorization", "Content-Type"],
+          "output_encoding": "no-op",
+          "backend": [
+            {
+              "url_pattern": "/api/ctrl/restaurants",
+              "method": "GET",
+              "host": ["http://foodndeliv-api-ro:8080"],
+              "disable_host_sanitize": true,
+              "encoding": "no-op"
+            }
+          ]
+        },
+        {
+          "endpoint": "/restaurants",
+          "method": "POST",
+          "input_headers": ["Authorization", "Content-Type"],
+          "output_encoding": "no-op",
+          "backend": [
+            {
+              "url_pattern": "/api/ctrl/restaurants",
+              "method": "POST",
+              "host": ["http://foodndeliv-api:8080"],
+              "disable_host_sanitize": true,
+              "encoding": "no-op"
             }
           ]
         }

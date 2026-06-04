@@ -1,11 +1,9 @@
 package com.example.foodndeliv.repository;
 
-import com.example.foodndeliv.entity.*;
-
+import com.example.foodndeliv.entity.Restaurant;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+import org.springframework.stereotype.Repository;
 
-@RepositoryRestResource(path = "restaurants")
+@Repository
 public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 }
-

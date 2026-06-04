@@ -7,5 +7,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    long countByCustomer_IdAndState(Long customerId, OrderState state);
+    long countByCustomerIdAndState(Long customerId, OrderState state);
+    long countByRestaurantIdAndState(Long restaurantId, OrderState state);
 }

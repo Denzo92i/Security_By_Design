@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 public class OrderLineDTO {
 
     @NotBlank(message = "Product name must not be blank")
+    @Size(min = 1, message = "Product name must not be empty")
     private String productName;
 
     @NotNull(message = "Quantity must not be null")
