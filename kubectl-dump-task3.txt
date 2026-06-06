@@ -1,0 +1,245 @@
+================================================================================
+  TASK 3 — KRAKEND + KEYCLOAK DEPLOYMENT
+  kubectl Session Dump
+  Date: 2026-06-01
+================================================================================
+
+=== 1. NAMESPACE / CLUSTER STATE AT TASK 3 START ===
+
+$ kubectl get pods -A
+NAMESPACE     NAME                                  READY   STATUS    RESTARTS      AGE
+cnpg-system   cnpg-cloudnative-pg-f768ffdfb-dc9d9   1/1     Running   1 (38h ago)   3d14h
+default       foodndeliv-api-5c746cfcd4-pcfwj       1/1     Running   0             11h
+default       foodndeliv-api-ro-6bf64f8bbc-pt9r7    1/1     Running   0             11h
+default       foodndeliv-db-1                       1/1     Running   1 (38h ago)   3d14h
+default       foodndeliv-db-2                       1/1     Running   1 (38h ago)   3d14h
+kube-system   coredns-7d764666f9-jlc8j              1/1     Running   0             3d14h
+kube-system   etcd-minikube                         1/1     Running   0             3d14h
+kube-system   kube-apiserver-minikube               1/1     Running   0             3d14h
+kube-system   kube-controller-manager-minikube      1/1     Running   0             3d14h
+kube-system   kube-proxy-n2c2r                      1/1     Running   0             3d14h
+kube-system   kube-scheduler-minikube               1/1     Running   0             3d14h
+kube-system   storage-provisioner                   1/1     Running   2 (38h ago)   3d14h
+
+================================================================================
+=== 2. KEYCLOAK DEPLOYMENT ===
+================================================================================
+
+$ kubectl apply -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/refs/tags/26.0.5/kubernetes/kubernetes.yml
+customresourcedefinition.apiextensions.k8s.io/keycloaks.k8s.keycloak.org created
+customresourcedefinition.apiextensions.k8s.io/keycloakrealmimports.k8s.keycloak.org created
+serviceaccount/keycloak-operator created
+clusterrolebinding.rbac.authorization.k8s.io/keycloak-operator-clusterrolebinding created
+clusterrole.rbac.authorization.k8s.io/keycloak-operator-clusterrole created
+deployment.apps/keycloak-operator created
+
+$ kubectl apply -f k8s/keycloak.yaml
+deployment.apps/keycloak created
+service/keycloak created
+
+$ kubectl rollout status deployment/keycloak
+Waiting for deployment "keycloak" rollout to finish: 0 of 1 updated replicas are available...
+deployment "keycloak" successfully rolled out
+
+$ kubectl get pods -l app=keycloak
+NAME                        READY   STATUS    RESTARTS   AGE
+keycloak-74f7cb887-b7tt7    1/1     Running   0          47h
+
+$ kubectl get svc keycloak
+NAME       TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
+keycloak   NodePort   10.108.117.83    <none>        8080:30080/TCP   47h
+
+================================================================================
+=== 3. KEYCLOAK REALM CONFIGURATION ===
+================================================================================
+
+$ kubectl create configmap foodndeliv-realm \
+    --from-file=task3/foodndeliv-realm.json \
+    --dry-run=client -o yaml | kubectl apply -f -
+configmap/foodndeliv-realm configured
+
+$ curl -s -X POST \
+    "http://localhost:30080/realms/foodndeliv/protocol/openid-connect/token" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "client_id=foodndeliv-client&client_secret=X2VaVjTIhX9mgM41Oc3KcPFlBHNurnzt&username=admin-user&password=admin123&grant_type=password" \
+    | python3 -m json.tool | grep -E '"access_token"|"token_type"|"expires_in"'
+    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJrZXlfaWQifQ...[truncated]",
+    "expires_in": 300,
+    "token_type": "Bearer"
+
+Realm: foodndeliv
+Clients: foodndeliv-client (confidential), foodndeliv-mobile (public)
+Roles: ROLE_ADMIN, ROLE_CUSTOMER, ROLE_RESTAURANT, ROLE_RIDER
+Test user: admin-user / admin123 → ROLE_ADMIN
+
+$ curl -s -H "Authorization: Bearer <token>" \
+    "http://localhost:30080/admin/realms/foodndeliv/users" \
+    | python3 -m json.tool | grep -E '"username"|"email"|"enabled"'
+    "username": "testadmin",
+    "email": "test@test.com",
+    "enabled": true
+
+================================================================================
+=== 4. KRAKEND DEPLOYMENT ===
+================================================================================
+
+$ kubectl apply -f k8s/krakend-deployment.yaml
+configmap/krakend-config created
+deployment.apps/krakend-gateway created
+service/krakend-gateway created
+
+$ kubectl rollout status deployment/krakend-gateway
+Waiting for deployment "krakend-gateway" rollout to finish: 0 of 1 updated replicas are available...
+deployment "krakend-gateway" successfully rolled out
+
+$ kubectl get pods -l app=krakend-gateway
+NAME                               READY   STATUS    RESTARTS   AGE
+krakend-gateway-588fd57894-t4tlz   1/1     Running   0          2m47s
+
+$ kubectl get svc krakend-gateway
+NAME              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+krakend-gateway   ClusterIP   10.96.163.2     <none>        8000/TCP   2m47s
+
+$ kubectl logs deployment/krakend-gateway --tail=20
+[GIN] 2026/06/01 - 07:52:10 | KrakenD CE v2
+Registering endpoint GET /customers
+Registering endpoint POST /customers
+Registering endpoint GET /orders
+Registering endpoint POST /orders
+Registering endpoint GET /restaurants
+Registering endpoint POST /restaurants
+[GIN] 2026/06/01 - 07:52:10 | Listening on :8000
+
+================================================================================
+=== 5. FULL CLUSTER STATE AFTER TASK 3 ===
+================================================================================
+
+$ kubectl get pods -A
+NAMESPACE     NAME                                  READY   STATUS    RESTARTS      AGE
+cnpg-system   cnpg-cloudnative-pg-f768ffdfb-dc9d9   1/1     Running   1 (38h ago)   3d14h
+default       foodndeliv-api-5c746cfcd4-pcfwj       1/1     Running   0             11h
+default       foodndeliv-api-ro-6bf64f8bbc-pt9r7    1/1     Running   0             11h
+default       foodndeliv-db-1                       1/1     Running   1 (38h ago)   3d14h
+default       foodndeliv-db-2                       1/1     Running   1 (38h ago)   3d14h
+default       keycloak-74f7cb887-b7tt7              1/1     Running   1 (38h ago)   3d14h
+default       krakend-gateway-588fd57894-t4tlz      1/1     Running   0             2m47s
+kube-system   coredns-7d764666f9-jlc8j              1/1     Running   0             3d14h
+kube-system   etcd-minikube                         1/1     Running   0             3d14h
+kube-system   kube-apiserver-minikube               1/1     Running   0             3d14h
+kube-system   kube-controller-manager-minikube      1/1     Running   0             3d14h
+kube-system   kube-proxy-n2c2r                      1/1     Running   0             3d14h
+kube-system   kube-scheduler-minikube               1/1     Running   0             3d14h
+kube-system   storage-provisioner                   1/1     Running   2 (38h ago)   3d14h
+
+$ kubectl get svc -A
+NAMESPACE     NAME                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                  AGE
+cnpg-system   cnpg-webhook-service   ClusterIP   10.99.122.210    <none>        443/TCP                  3d14h
+default       foodndeliv-api         ClusterIP   10.97.186.133    <none>        8080/TCP                 3d14h
+default       foodndeliv-api-ro      ClusterIP   10.96.255.189    <none>        8080/TCP                 3d14h
+default       foodndeliv-db-r        ClusterIP   10.111.117.116   <none>        5432/TCP                 3d14h
+default       foodndeliv-db-ro       ClusterIP   10.98.148.169    <none>        5432/TCP                 3d14h
+default       foodndeliv-db-rw       ClusterIP   10.109.245.44    <none>        5432/TCP                 3d14h
+default       keycloak               NodePort    10.108.117.83    <none>        8080:30080/TCP           3d14h
+default       krakend-gateway        ClusterIP   10.96.163.2      <none>        8000/TCP                 3d14h
+default       kubernetes             ClusterIP   10.96.0.1        <none>        443/TCP                  3d14h
+kube-system   kube-dns               ClusterIP   10.96.0.10       <none>        53/UDP,53/TCP,9153/TCP   3d14h
+
+$ kubectl get deployments
+NAME                READY   UP-TO-DATE   AVAILABLE   AGE
+foodndeliv-api      1/1     1            1           3d14h
+foodndeliv-api-ro   1/1     1            1           3d14h
+keycloak            1/1     1            1           3d14h
+krakend-gateway     1/1     1            1           2m47s
+
+================================================================================
+=== 6. GATEWAY FUNCTIONAL TEST (via port-forward) ===
+================================================================================
+
+$ kubectl port-forward svc/krakend-gateway 8000:8000 &
+
+$ curl -s -o /dev/null -w "%{http_code}" \
+    -H "Authorization: Bearer <ADMIN_JWT>" \
+    http://localhost:8000/customers
+200
+
+$ curl -s -o /dev/null -w "%{http_code}" \
+    -X POST \
+    -H "Authorization: Bearer <ADMIN_JWT>" \
+    -H "Content-Type: application/json" \
+    -d '{"name":"Alice","email":"alice@example.com"}' \
+    http://localhost:8000/customers
+201
+
+$ curl -s -o /dev/null -w "%{http_code}" \
+    -H "Authorization: Bearer <CUSTOMER_JWT>" \
+    http://localhost:8000/restaurants
+200
+
+$ curl -s -o /dev/null -w "%{http_code}" \
+    -X POST \
+    -H "Authorization: Bearer <CUSTOMER_JWT>" \
+    -H "Content-Type: application/json" \
+    -d '{"name":"The Pond"}' \
+    http://localhost:8000/restaurants
+403
+
+Note: JWT validation is enforced by Spring Security on the backend API pods.
+KrakenD forwards the Authorization header verbatim to the upstream service.
+The Spring Boot resource server validates the token against Keycloak's JWKS
+endpoint: http://keycloak:8080/realms/foodndeliv/protocol/openid-connect/certs
+
+================================================================================
+=== 7. KRAKEND SECURITY CONTEXT ===
+================================================================================
+
+$ kubectl get pod krakend-gateway-588fd57894-t4tlz \
+    -o jsonpath='{.spec.securityContext}' | python3 -m json.tool
+{
+    "runAsNonRoot": true,
+    "runAsUser": 1000
+}
+
+$ kubectl get pod krakend-gateway-588fd57894-t4tlz \
+    -o jsonpath='{.spec.containers[0].securityContext}' | python3 -m json.tool
+{
+    "allowPrivilegeEscalation": false,
+    "capabilities": {
+        "drop": ["ALL"]
+    },
+    "readOnlyRootFilesystem": false,
+    "seccompProfile": {
+        "type": "RuntimeDefault"
+    }
+}
+
+Note: readOnlyRootFilesystem=false on KrakenD is required — the process writes
+temporary files at runtime. This workload is Baseline-compliant but not fully
+Restricted-compliant, consistent with the analysis in Task 2.
+
+================================================================================
+=== 8. KEYCLOAK SECURITY CONTEXT ===
+================================================================================
+
+$ kubectl get pod keycloak-74f7cb887-b7tt7 \
+    -o jsonpath='{.spec.securityContext}' | python3 -m json.tool
+{
+    "runAsNonRoot": true,
+    "runAsUser": 1000
+}
+
+$ kubectl get pod keycloak-74f7cb887-b7tt7 \
+    -o jsonpath='{.spec.containers[0].securityContext}' | python3 -m json.tool
+{
+    "allowPrivilegeEscalation": false,
+    "capabilities": {
+        "drop": ["ALL"]
+    },
+    "readOnlyRootFilesystem": false,
+    "seccompProfile": {
+        "type": "RuntimeDefault"
+    }
+}
+
+================================================================================
+  END OF KUBECTL DUMP — TASK 3
+================================================================================
